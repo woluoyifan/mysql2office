@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MySQL Export</title>
+    <link rel="stylesheet" href="../element-plus/index.css"/>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app" v-cloak>
+    <el-form ref="form" :rules="rules" action="export" target="_blank" label-width="160px" style="width: 600px"
+             size="mini" :model="config">
+        <el-tabs>
+            <el-tab-pane label="Connection Params">
+                <el-form-item label="host" prop="host">
+                    <el-input name="host" v-model="config.host"/>
+                </el-form-item>
+                <el-form-item label="port" prop="port">
+                    <el-input name="port" v-model="config.port"/>
+                </el-form-item>
+                <el-form-item label="user" prop="user">
+                    <el-input name="user" v-model="config.user"/>
+                </el-form-item>
+                <el-form-item label="password" prop="password">
+                    <el-input name="password" type="password" v-model="config.password" show-password/>
+                </el-form-item>
+                <el-form-item label="db name" prop="dbName">
+                    <el-input name="dbName" v-model="config.dbName"/>
+                </el-form-item>
+                <el-form-item label="url param">
+                    <el-input name="connProps" type="textarea" v-model="config.connProps"/>
+                </el-form-item>
+            </el-tab-pane>
+            <el-tab-pane label="Custom Title">
+                <el-form-item label="table name">
+                    <el-input name="tableNameTitle" v-model="config.tableNameTitle"/>
+                </el-form-item>
+                <el-form-item label="table comment">
+                    <el-input name="tableCommentTitle" v-model="config.tableCommentTitle"/>
+                </el-form-item>
+                <el-form-item label="field name">
+                    <el-input name="fieldNameTitle" v-model="config.fieldNameTitle"/>
+                </el-form-item>
+                <el-form-item label="field type">
+                    <el-input name="fieldTypeTitle" v-model="config.fieldTypeTitle"/>
+                </el-form-item>
+                <el-form-item label="field nullable">
+                    <el-input name="fieldNullableTitle" v-model="config.fieldNullableTitle"/>
+                </el-form-item>
+                <el-form-item label="field default value">
+                    <el-input name="fieldDefaultValueTitle" v-model="config.fieldDefaultValueTitle"/>
+                </el-form-item>
+                <el-form-item label="field comment">
+                    <el-input name="fieldCommentTitle" v-model="config.fieldCommentTitle"/>
+                </el-form-item>
+            </el-tab-pane>
+        </el-tabs>
+        <!--        <el-collapse :model-value="['1']">-->
+        <!--            <el-collapse-item title="Connection Params" name="1">-->
+        <!--            </el-collapse-item>-->
+        <!--            <el-collapse-item title="Custom Title" name="2">-->
+        <!--             -->
+        <!--            </el-collapse-item>-->
+        <!--        </el-collapse>-->
+        <el-divider>Operation</el-divider>
+        <el-form-item label="export type" prop="exportType">
+            <el-radio name="exportType" v-model="config.exportType" label="excel" border>Excel</el-radio>
+            <el-radio name="exportType" v-model="config.exportType" label="word" border>Word</el-radio>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="listTableName">List Tables</el-button>
+            <el-button type="success" disabled v-if="config.tableNames.length === 0">Export( list and select table first )</el-button>
+            <el-button type="success" native-type="submit" v-else>Export</el-button>
+        </el-form-item>
+        <el-form-item label="name filter" v-show="tableNames.length > 0">
+            <el-input v-model="tableNameFilter"/>
+        </el-form-item>
+        <el-form-item v-show="tableNames.length > 0">
+            <el-button type="primary" @click="selectAll">Select All</el-button>
+            <el-button type="primary" @click="deselectAll">Deselect All</el-button>
+            <el-checkbox-group v-model="config.tableNames" @change="handleCheckedChange">
+                <el-checkbox name="tableNames" v-for="name in activeTableNames" :label="name" :key="name">{{name}}
+                </el-checkbox>
+            </el-checkbox-group>
+        </el-form-item>
+    </el-form>
+</div>
+<script src="../js/vue.global.prod.js"></script>
+<script src="../element-plus/index.full.js"></script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                config: {
+                    host: 'localhost',
+                    port: 3306,
+                    user: 'root',
+                    password: '',
+                    connProps: '',
+                    dbName: '',
+                    tableNameTitle: '',
+                    tableCommentTitle: '',
+                    fieldNameTitle: '',
+                    fieldTypeTitle: '',
+                    fieldNullableTitle: '',
+                    fieldDefaultValueTitle: '',
+                    fieldCommentTitle: '',
+                    exportType: 'excel',
+                    tableNames: [],
+                },
+                rules: {
+                    host: [
+                        {required: true, trigger: 'blur'},
+                    ],
+                    port: [
+                        {required: true, trigger: 'blur'},
+                    ],
+                    user: [
+                        {required: true, trigger: 'blur'},
+                    ],
+                    password: [
+                        {required: true, trigger: 'blur'},
+                    ],
+                    dbName: [
+                        {required: true, trigger: 'blur'},
+                    ],
+                },
+                tableNames: [],
+                tableNameFilter: '',
+                checkAll: false,
+                isIndeterminate: true,
+            }
+        },
+        computed: {
+            activeTableNames() {
+                const filter = this.tableNameFilter;
+                if (filter && filter.length > 0) {
+                    return this.tableNames.filter(v => v.indexOf(filter) > -1);
+                }else{
+                    return this.tableNames;
+                }
+            },
+        },
+        methods: {
+            selectAll(){
+              this.config.tableNames = [];
+              this.activeTableNames.forEach(v => this.config.tableNames.push(v))
+            },
+            deselectAll(){
+              this.config.tableNames = [];
+            },
+            handleCheckAllChange(val) {
+                this.config.tableNames = val ? this.activeTableNames : []
+                // this.isIndeterminate = false
+            },
+            handleCheckedChange(value) {
+                let checkedCount = value.length
+                this.checkAll = checkedCount === this.config.tableNames.length
+                this.isIndeterminate =
+                    checkedCount > 0 && checkedCount < this.config.tableNames.length
+            },
+            listTableName() {
+                this.fetchByParam('listTableName', this.config)
+                    .then(data => {
+                        console.log(data.data)
+                        this.tableNames = data.data
+                    })
+            },
+            fetchByParam(url, form) {
+                const query = form ? Object.keys(form).map(v => v + '=' + form[v]).join('&') : '';
+                return fetch(url + '?' + query, {
+                    method: 'POST',
+                })
+                    .then(response => response.json())
+            },
+            submit() {
+                this.$refs.form.submit();
+            },
+        }
+    })
+    app.use(ElementPlus);
+    const vm = app.mount('#app')
+</script>
+</body>
+</html>
