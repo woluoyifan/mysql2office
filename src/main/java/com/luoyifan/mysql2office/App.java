@@ -13,8 +13,8 @@ public class App {
     public static void main(String[] args) throws Exception {
         ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
         String port = ctx.getEnvironment().getProperty("local.server.port");
-        System.out.println("Please use modern browser (Chrome, Firefox, Edge ...) access http://localhost:" + port);
-        System.out.println("Please use modern browser (Chrome, Firefox, Edge ...) access http://localhost:" + port);
-        System.out.println("Please use modern browser (Chrome, Firefox, Edge ...) access http://localhost:" + port);
+        System.out.println("Please access http://localhost:" + port + " using a modern browser (Chrome, Firefox, Edge ...)");
+        System.out.println("Please access http://localhost:" + port + " using a modern browser (Chrome, Firefox, Edge ...)");
+        System.out.println("Please access http://localhost:" + port + " using a modern browser (Chrome, Firefox, Edge ...)");
     }
 }
